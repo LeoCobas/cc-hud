@@ -37,7 +37,7 @@ export function suspiciousFiles(files: readonly string[]): string[] {
 /** What the main model gets when the person asks it to resolve a conflict. */
 export function resolvePrompt(conflicts: readonly string[]): string {
   return [
-    'Un `git pull --rebase` del plugin git-sync quedó con conflictos. Resolvelos:',
+    'Un `git pull --rebase` quedó con conflictos. Resolvelos:',
     '',
     ...conflicts.map(f => `- ${f}`),
     '',

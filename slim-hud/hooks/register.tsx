@@ -1,7 +1,6 @@
-// A slim two-line HUD above the prompt, in hoobnn's `nerd` theme:
+// A slim two-line HUD below the prompt, in hoobnn's `nerd` theme:
 //   line 1  model · effort  folder  branch ↑↓ [+a -r]
 //   line 2  context · 5h / 7d usage (· cost · time)   [Pull] [Commit] [Push]
-// The git actions are LeoCobas/git-sync's, folded into the bar's second line.
 
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
@@ -53,7 +52,7 @@ async function refreshInfo($: $): Promise<void> {
   await update($, info, () => next)
 }
 
-// ---------------------------------------------------------------- git (from git-sync)
+// ---------------------------------------------------------------- git
 
 async function git($: $, args: string[], init: { stdin?: string; timeoutMs?: number } = {}) {
   return $.process.run(['git', ...args], { env: GIT_ENV, timeoutMs: 60_000, ...init })
@@ -356,7 +355,7 @@ export const register: Register = (on, options) => {
     duration: opt('showDuration', false),
     autoSync: opt('autoSync', true),
   }
-  const below = options.position === 'below'
+  const below = options.position !== 'above'
 
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'sync', description: 'git fetch y pull si estás atrás (slim-hud)' }).catch(() => undefined)

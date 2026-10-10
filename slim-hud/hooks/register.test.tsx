@@ -26,7 +26,7 @@ test('sums numstat, skipping binaries', () => {
   expect(parseNumstat('10\t2\ta.ts\n-\t-\tlogo.png\n5\t0\tb.ts\n')).toEqual({ added: 15, removed: 2 })
 })
 
-test('draws both lines with the git buttons', async ($, on) => {
+test('draws both lines with the git buttons', { options: { position: 'above' } }, async ($, on) => {
   on('session.model', async () => ({ value: 'claude-opus-5-5' }))
   on('session.cwd', async () => ({ value: 'C:\\Users\\Leo\\aurora-app' }))
   on('session.usage', async () => ({
@@ -57,7 +57,7 @@ test('draws both lines with the git buttons', async ($, on) => {
   }
 })
 
-test('draws below the prompt, over the hint line', { options: { position: 'below' } }, async ($, on) => {
+test('draws below the prompt by default, over the hint line', async ($, on) => {
   on('session.model', async () => ({ value: 'claude-opus-5-5' }))
   on('session.cwd', async () => ({ value: 'C:/Users/Leo/aurora-app' }))
   on('session.usage', async () => ({ value: { startedAt: 0, context: { window: 200000, tokens: 84000, percent: 42 }, rateLimits: [] } }))
