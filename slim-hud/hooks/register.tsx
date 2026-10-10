@@ -38,7 +38,9 @@ async function refreshInfo($: $): Promise<void> {
     $.settings.read().catch(() => ({}) as Record<string, unknown>),
     read($, stepEffort),
   ])
-  const configured = (settings as { effortLevel?: unknown }).effortLevel
+  // The effort is set per model (`modelSettings[<id>].effortLevel`) or, in older settings, at the top level.
+  const s = settings as { effortLevel?: unknown; modelSettings?: Record<string, { effortLevel?: unknown } | undefined> }
+  const configured = s.modelSettings?.[model.replace(/\[1m\]$/i, '')]?.effortLevel ?? s.effortLevel
   const next: Info = {
     model: modelName(model),
     effort: effort ?? (typeof configured === 'string' ? configured : null),
@@ -50,6 +52,20 @@ async function refreshInfo($: $): Promise<void> {
     startedAt: usage.startedAt,
   }
   await update($, info, () => next)
+}
+
+// One lazy fetch at a time, for a bar asked to draw before it has anything to show.
+let isFetching = false
+
+/** Fills the bar when it draws with nothing yet: a reload, or a session that began without `session.start`. */
+async function fetchMissing($: $): Promise<void> {
+  if (isFetching) return
+  isFetching = true
+  try {
+    await Promise.all([refreshInfo($).catch(() => undefined), refreshGit($).catch(() => undefined)])
+  } finally {
+    isFetching = false
+  }
 }
 
 // ---------------------------------------------------------------- git
@@ -200,7 +216,11 @@ type Show = { effort: boolean; diff: boolean; weekly: boolean; resets: boolean; 
 /** The bar: two lines, plus a commit draft or a conflict while one waits. */
 async function drawBar($: $, e: Parameters<$['ui']['resolve']>[0], width: number, show: Show) {
   const i = await read($, info)
-  if (i === null) return null
+  if (i === null) {
+    // The write that lands redraws the bar.
+    void fetchMissing($).catch(() => undefined)
+    return null
+  }
 
   const { Box, Button, Text } = $.ui.resolve(e)
   const s = await read($, gitState)

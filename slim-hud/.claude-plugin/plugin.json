@@ -1,6 +1,6 @@
 {
   "name": "slim-hud",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A slim two-line nerd HUD below the prompt: model, effort, folder, git, context, subscription usage and Pull / Commit / Push buttons",
   "author": { "name": "LeoCobas" },
   "types": "./types/index.d.ts",

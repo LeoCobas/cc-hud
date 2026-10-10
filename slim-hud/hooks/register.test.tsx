@@ -81,3 +81,24 @@ test('draws below the prompt by default, over the hint line', async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /shortcuts/ })).toBeDefined()
   await ui.unmount()
 })
+
+test('fills itself when drawn before session.start, reading the per-model effort', async ($, on) => {
+  on('session.model', async () => ({ value: 'claude-opus-5-5' }))
+  on('session.cwd', async () => ({ value: 'C:/Users/Leo/aurora-app' }))
+  on('session.usage', async () => ({ value: { startedAt: 0, context: { window: 200000, tokens: 84000, percent: 42 }, rateLimits: [] } }))
+  on('settings.read', async () => ({ value: { modelSettings: { 'claude-opus-5-5': { effortLevel: 'medium' } } } }))
+  on('process.run', async ($, e) => {
+    const stdout = e.argv[1] === 'status' ? STATUS : ''
+    return { value: { exitCode: 0, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
+  })
+  on('ui.render', { component: 'PromptHint' }, async ($, e) => {
+    const { Text } = $.ui.resolve(e)
+    return <Text>{e.props.hint}</Text>
+  })
+
+  const ui = await $.ui.mount({ plugin: 'slim-hud', surface: 'terminal', component: 'PromptHint', props: { isDraft: false, isWorking: false, hint: '? for shortcuts' } })
+  expect(await ui.find({ type: 'Text', text: /Opus 5\.5/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /medium/ })).toBeDefined()
+  expect(await ui.find({ key: 'push' })).toBeDefined()
+  await ui.unmount()
+})
