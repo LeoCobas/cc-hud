@@ -2,10 +2,11 @@
 
 A slim two-line HUD for Claude Code, in a Nerd Font theme (Catppuccin colors), with Pull / Commit / Push buttons built in.
 
-<img width="1298" height="169" alt="{98FDFE9D-A92B-49F1-ACC8-9F7E9A534163}" src="https://github.com/user-attachments/assets/2988a189-7644-4bfc-8d38-563e668a2112" />
+<img width="1298" height="169" alt="cc-hud below the prompt" src="https://github.com/user-attachments/assets/2988a189-7644-4bfc-8d38-563e668a2112" />
 
 - **Line 1:** model, reasoning effort, folder, git branch (`*` when dirty), commits ahead/behind, uncommitted `[+added -removed]`.
 - **Line 2:** context window, subscription usage (5-hour and 7-day windows with time to reset), and the git buttons. Gauges turn yellow at 70% and red at 90%.
+
 ## Git
 
 | Action | What it runs | Uses a model? |
