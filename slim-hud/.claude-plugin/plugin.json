@@ -1,0 +1,17 @@
+{
+  "name": "slim-hud",
+  "version": "0.1.0",
+  "description": "A slim two-line nerd HUD above the prompt: model, effort, folder, git, context, subscription usage and git-sync's Pull / Commit / Push buttons",
+  "author": { "name": "LeoCobas" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "position": { "type": "string", "title": "Position", "description": "Above the prompt (a band) or below it (over the hint line)", "options": ["above", "below"], "default": "above" },
+    "showEffort": { "type": "boolean", "title": "Effort", "description": "Show the reasoning effort beside the model", "default": true },
+    "showDiff": { "type": "boolean", "title": "Diff lines", "description": "Show [+added -removed] of uncommitted changes", "default": true },
+    "showWeekly": { "type": "boolean", "title": "Weekly usage", "description": "Show the 7-day limit beside the 5-hour one", "default": true },
+    "showResets": { "type": "boolean", "title": "Reset times", "description": "Show how long until each usage window resets", "default": true },
+    "showCost": { "type": "boolean", "title": "Session cost", "description": "Show what the session has cost so far (USD)", "default": false },
+    "showDuration": { "type": "boolean", "title": "Session time", "description": "Show how long the session has run", "default": false },
+    "autoSync": { "type": "boolean", "title": "Auto-sync", "description": "git fetch (and fast-forward when clean) on session start and every 2 minutes", "default": true }
+  }
+}

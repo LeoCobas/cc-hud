@@ -1,0 +1,5 @@
+{
+  "name": "cc-hud",
+  "owner": { "name": "LeoCobas" },
+  "plugins": [{ "name": "slim-hud", "source": "./slim-hud" }]
+}
