@@ -37,15 +37,15 @@ export function suspiciousFiles(files: readonly string[]): string[] {
 /** What the main model gets when the person asks it to resolve a conflict. */
 export function resolvePrompt(conflicts: readonly string[]): string {
   return [
-    'Un `git pull --rebase` quedó con conflictos. Resolvelos:',
+    'A `git pull --rebase` stopped on conflicts. Please resolve them:',
     '',
     ...conflicts.map(f => `- ${f}`),
     '',
-    '1. Mirá `git status` y `git log --oneline -5 origin/HEAD` para entender qué trajo el remoto y qué es nuestro.',
-    '2. En cada archivo, combiná los dos lados conservando la intención de ambos cambios (no descartes uno sin motivo). Si un conflicto es ambiguo, preguntame antes de elegir.',
-    '3. `git add` de los archivos resueltos y `GIT_EDITOR=true git rebase --continue` hasta terminar el rebase.',
-    '4. Corré el build/tests del proyecto para verificar.',
-    '5. No hagas push: avisame cómo quedó y lo pusheo yo con el botón.',
+    '1. Check `git status` and `git log --oneline -5 origin/HEAD` to see what came from the remote and what is ours.',
+    '2. In each file, merge both sides keeping the intent of both changes (do not drop one without a reason). If a conflict is ambiguous, ask me before choosing.',
+    '3. `git add` the resolved files and run `GIT_EDITOR=true git rebase --continue` until the rebase is done.',
+    '4. Run the project build/tests to verify.',
+    '5. Do not push: tell me how it went and I will push with the button.',
   ].join('\n')
 }
 /** The prompt Haiku gets: recent subjects as the style guide, then the staged diff. */
@@ -96,5 +96,5 @@ export function parseNumstat(out: string): { added: number; removed: number } {
 /** Last useful line of a git error, for a toast. */
 export function errorLine(stderr: string, stdout: string): string {
   const lines = `${stderr}\n${stdout}`.split('\n').map(l => l.trim()).filter(Boolean)
-  return lines.find(l => /^(error|fatal|CONFLICT)/.test(l)) ?? lines[lines.length - 1] ?? 'falló'
+  return lines.find(l => /^(error|fatal|CONFLICT)/.test(l)) ?? lines[lines.length - 1] ?? 'failed'
 }

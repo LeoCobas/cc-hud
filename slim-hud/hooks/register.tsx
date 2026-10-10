@@ -101,25 +101,25 @@ async function guarded($: $, label: string, work: () => Promise<void>) {
 /** fetch, then fast-forward when behind and clean; only warns when there are local changes. */
 async function sync($: $): Promise<string> {
   const fetched = await git($, ['fetch', '--quiet'])
-  if (fetched.exitCode !== 0) return `fetch falló: ${errorLine(fetched.stderr, fetched.stdout)}`
+  if (fetched.exitCode !== 0) return `fetch failed: ${errorLine(fetched.stderr, fetched.stdout)}`
 
   const s = await refreshGit($)
-  if (s === null || !s.hasUpstream || s.behind === 0) return 'Al día con el remoto.'
-  if (s.changes > 0) return `⚠ ${s.behind} commit(s) nuevos en el remoto y tenés cambios locales: tocá Pull.`
+  if (s === null || !s.hasUpstream || s.behind === 0) return 'Up to date with the remote.'
+  if (s.changes > 0) return `⚠ ${s.behind} new commit(s) on the remote and you have local changes: press Pull.`
 
   const pulled = await git($, ['pull', '--ff-only', '--quiet'])
   await refreshGit($)
   return pulled.exitCode === 0
-    ? `Sincronizado: ↓${s.behind} commit(s).`
-    : `pull falló: ${errorLine(pulled.stderr, pulled.stdout)}`
+    ? `Synced: ↓${s.behind} commit(s).`
+    : `pull failed: ${errorLine(pulled.stderr, pulled.stdout)}`
 }
 
 async function reportPullFailure($: $, what: string, r: { stderr: string; stdout: string }) {
   const s = await refreshGit($)
   if (s !== null && s.conflicts.length > 0) {
-    $.ui.toast(`${what}: conflicto en ${s.conflicts.length} archivo(s). Usá "Resolver" o "Abortar".`, { timeoutMs: 10000 })
+    $.ui.toast(`${what}: conflict in ${s.conflicts.length} file(s). Use "Resolve" or "Abort".`, { timeoutMs: 10000 })
   } else {
-    $.ui.toast(`${what} falló: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
+    $.ui.toast(`${what} failed: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
   }
 }
 
@@ -132,7 +132,7 @@ async function pull($: $) {
 async function abortRebase($: $) {
   const r = await git($, ['rebase', '--abort'])
   const ok = r.exitCode === 0 || (await git($, ['merge', '--abort'])).exitCode === 0
-  $.ui.toast(ok ? 'Rebase abortado: quedaste como antes del pull.' : `No se pudo abortar: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
+  $.ui.toast(ok ? 'Rebase aborted: back to where you were before the pull.' : `Could not abort: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
 }
 
 async function resolveWithClaude($: $) {
@@ -146,10 +146,10 @@ async function excludeNewFiles($: $) {
   if (d === null || d.newFiles.length === 0) return
   await git($, ['reset', '-q', '--', ...d.newFiles])
   await update($, draft, () => ({ ...d, newFiles: [] }))
-  $.ui.toast(`Excluidos ${d.newFiles.length} archivo(s) nuevo(s). Tocá Regenerar si el mensaje los menciona.`, { timeoutMs: 6000 })
+  $.ui.toast(`Excluded ${d.newFiles.length} new file(s). Press Regenerate if the message mentions them.`, { timeoutMs: 6000 })
 }
 
-/** Stages everything (first Commit press) or keeps the current staging (Regenerar), then asks Haiku. */
+/** Stages everything (first Commit press) or keeps the current staging (Regenerate), then asks Haiku. */
 async function generate($: $, addAll: boolean) {
   let newFiles = (await read($, draft))?.newFiles ?? []
   if (addAll) {
@@ -159,7 +159,7 @@ async function generate($: $, addAll: boolean) {
   }
   const diff = await git($, ['diff', '--staged'])
   if (diff.stdout.trim() === '') {
-    $.ui.toast('No hay cambios para commitear.')
+    $.ui.toast('Nothing to commit.')
     return
   }
   const [log, stat] = await Promise.all([git($, ['log', '--format=%s', '-10']), git($, ['diff', '--staged', '--stat'])])
@@ -171,7 +171,7 @@ async function generate($: $, addAll: boolean) {
     prompt: commitPrompt(log.stdout, stat.stdout, diff.stdout),
   })
   if (!r.isAnswered) {
-    $.ui.toast(`No se pudo generar el mensaje (${r.reason}).`, { timeoutMs: 6000 })
+    $.ui.toast(`Could not write the message (${r.reason}).`, { timeoutMs: 6000 })
     return
   }
   await update($, draft, () => ({ message: cleanMessage(r.text), newFiles }))
@@ -185,7 +185,7 @@ async function commit($: $) {
     await update($, draft, () => null)
     $.ui.toast(`Commit: ${message.split('\n')[0]}`, { timeoutMs: 6000 })
   } else {
-    $.ui.toast(`Commit falló: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
+    $.ui.toast(`Commit failed: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
   }
 }
 
@@ -198,13 +198,13 @@ async function push($: $) {
     if (fresh !== null && fresh.behind > 0) {
       const rebased = await git($, ['pull', '--rebase', '--autostash'])
       if (rebased.exitCode !== 0) {
-        await reportPullFailure($, 'Push cancelado, el rebase', rebased)
+        await reportPullFailure($, 'Push cancelled: the rebase', rebased)
         return
       }
     }
   }
   const r = await git($, s.hasUpstream ? ['push'] : ['push', '-u', 'origin', 'HEAD'], { timeoutMs: 120_000 })
-  $.ui.toast(r.exitCode === 0 ? 'Push OK.' : `Push falló: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
+  $.ui.toast(r.exitCode === 0 ? 'Push OK.' : `Push failed: ${errorLine(r.stderr, r.stdout)}`, { timeoutMs: 8000 })
 }
 
 function listFiles(files: readonly string[], max = 4): string {
@@ -246,7 +246,7 @@ async function drawBar($: $, e: Parameters<$['ui']['resolve']>[0], width: number
           <Text color={C.branch}>{s.branch}{s.changes > 0 ? '*' : ''}</Text>
           {s.ahead > 0 && <Text color={C.branch}> ↑{s.ahead}</Text>}
           {s.behind > 0 && <Text color={C.warning}> ↓{s.behind}</Text>}
-          {!s.hasUpstream && <Text color={C.dim}> (sin upstream)</Text>}
+          {!s.hasUpstream && <Text color={C.dim}> (no upstream)</Text>}
           {show.diff && (s.added > 0 || s.removed > 0) && (
             <Text color={C.dim}>
               {' ['}
@@ -307,25 +307,25 @@ async function drawBar($: $, e: Parameters<$['ui']['resolve']>[0], width: number
     } else if (s.conflicts.length > 0) {
       actions = (
         <Box gap={1}>
-          <Button key="resolve" label="Resolver" variant="primary" onPress={() => guarded($, 'Enviando a Claude', () => resolveWithClaude($))} />
-          <Button key="abort" label="Abortar" onPress={() => guarded($, 'Abortando', () => abortRebase($))} />
+          <Button key="resolve" label="Resolve" variant="primary" onPress={() => guarded($, 'Sending to Claude', () => resolveWithClaude($))} />
+          <Button key="abort" label="Abort" onPress={() => guarded($, 'Aborting', () => abortRebase($))} />
         </Box>
       )
-      extra = <Text color={C.critical}>{G.warning} Conflicto en {s.conflicts.length} archivo(s): {listFiles(s.conflicts)}</Text>
+      extra = <Text color={C.critical}>{G.warning} Conflict in {s.conflicts.length} file(s): {listFiles(s.conflicts)}</Text>
     } else if (d !== null) {
       actions = (
         <Box gap={1}>
-          <Button key="confirm" label="Confirmar" variant="primary" onPress={() => guarded($, 'Commiteando', () => commit($))} />
-          <Button key="regen" label="Regenerar" onPress={() => guarded($, 'Generando mensaje', () => generate($, false))} />
-          {d.newFiles.length > 0 && <Button key="exclude" label="Excluir nuevos" onPress={() => guarded($, 'Excluyendo', () => excludeNewFiles($))} />}
-          <Button key="cancel" label="Cancelar" onPress={() => update($, draft, () => null)} />
+          <Button key="confirm" label="Confirm" variant="primary" onPress={() => guarded($, 'Committing', () => commit($))} />
+          <Button key="regen" label="Regenerate" onPress={() => guarded($, 'Writing message', () => generate($, false))} />
+          {d.newFiles.length > 0 && <Button key="exclude" label="Exclude new" onPress={() => guarded($, 'Excluding', () => excludeNewFiles($))} />}
+          <Button key="cancel" label="Cancel" onPress={() => update($, draft, () => null)} />
         </Box>
       )
     } else {
       actions = (
         <Box gap={1}>
           <Button key="pull" label="Pull" onPress={() => guarded($, 'Pull', () => pull($))} />
-          <Button key="commit" label="Commit" onPress={() => guarded($, 'Generando mensaje', () => generate($, true))} />
+          <Button key="commit" label="Commit" onPress={() => guarded($, 'Writing message', () => generate($, true))} />
           <Button key="push" label="Push" onPress={() => guarded($, 'Push', () => push($))} />
         </Box>
       )
@@ -338,11 +338,11 @@ async function drawBar($: $, e: Parameters<$['ui']['resolve']>[0], width: number
     const risky = suspiciousFiles(d.newFiles)
     draftView = (
       <Box flexDirection="column">
-        <Text color={C.branch}>Commit propuesto:</Text>
+        <Text color={C.branch}>Proposed commit:</Text>
         <Text>{d.message}</Text>
         {d.newFiles.length > 0 && (
           <Text color={risky.length > 0 ? C.warning : C.dim}>
-            {risky.length > 0 ? `${G.warning} Revisá: ${listFiles(risky)} · ` : ''}Nuevos: {listFiles(d.newFiles)}
+            {risky.length > 0 ? `${G.warning} Check: ${listFiles(risky)} · ` : ''}New: {listFiles(d.newFiles)}
           </Text>
         )}
       </Box>
@@ -378,7 +378,7 @@ export const register: Register = (on, options) => {
   const below = options.position !== 'above'
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'sync', description: 'git fetch y pull si estás atrás (slim-hud)' }).catch(() => undefined)
+    await $.command.register({ name: 'sync', description: 'git fetch, and pull when behind (slim-hud)' }).catch(() => undefined)
     const started = await next(e)
 
     void refreshInfo($).catch(() => undefined)
@@ -400,7 +400,7 @@ export const register: Register = (on, options) => {
     return started
   })
 
-  on('command.run', { command: 'sync' }, async $ => ({ text: await sync($).catch(err => `sync falló: ${String(err)}`) }))
+  on('command.run', { command: 'sync' }, async $ => ({ text: await sync($).catch(err => `sync failed: ${String(err)}`) }))
 
   // /model and /effort change what line 1 shows before the next turn does.
   on('command.run', async ($, e, next) => {
